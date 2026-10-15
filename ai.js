@@ -16,7 +16,7 @@ export function startCoding(mobile = false) {
   if (worker) return;
   const models = mobile ? ["Xenova/mobilebert-uncased-mnli"] : ["Xenova/nli-deberta-v3-xsmall", "Xenova/mobilebert-uncased-mnli"];
   try {
-    worker = new Worker(new URL("./ai-worker.js", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("./ai-worker.js?v=20261015-0938", import.meta.url), { type: "module" });
   } catch (e) { aiState.coding = "unavailable"; emit(); return; }
   aiState.coding = "loading"; emit();
   worker.onmessage = e => {

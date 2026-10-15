@@ -82,25 +82,44 @@ export function speak(text, { voice, rate = 1, lang } = {}) {
 // So on phones we listen in one-shot mode and never silently restart after speech.
 export const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
 
-const norm = s => s.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim();
+const norm = s => s.toLowerCase().replace(/[^\p{L}\p{M}\p{N}' ]/gu, " ").replace(/\s+/g, " ").trim();
 
 // Join transcript pieces without repeating text that a later piece already contains.
-export function mergeText(parts) {
+// cumulative=true: pieces are successive guesses of the SAME speech (phones), so a piece that
+// re-says the tail with corrections replaces that tail instead of being added again.
+export function mergeText(parts, cumulative = false) {
   let out = "";
   for (const raw of parts) {
     const p = (raw || "").trim();
     if (!p) continue;
     const a = norm(out), b = norm(p);
     if (!a) { out = p; continue; }
-    if (b.startsWith(a)) { out = p; continue; }     // cumulative piece: replace
-    if (a.endsWith(b) || a.includes(b)) continue;    // already have it
-    // overlap: end of out == start of p
+    if (b.startsWith(a)) { out = p; continue; }     // longer guess of the same words: replace
+    if (a.includes(b)) continue;                     // already have it
     const aw = a.split(" "), bw = b.split(" ");
+    if (cumulative && bw.length >= 2) {
+      // Corrected guess: find where this piece's opening words last appear and replace from there.
+      let j = -1;
+      for (let i = aw.length - 2; i >= 0; i--) if (aw[i] === bw[0] && aw[i + 1] === bw[1]) { j = i; break; }
+      if (j >= 0) { out = (j ? out.split(/\s+/).slice(0, j).join(" ") + " " : "") + p; continue; }
+      if (aw[0] === bw[0]) { out = bw.length >= aw.length * 0.6 ? p : out; continue; }
+    }
+    // Overlap: end of what we have == start of the new piece.
     let k = Math.min(aw.length, bw.length);
     for (; k > 0; k--) if (aw.slice(-k).join(" ") === bw.slice(0, k).join(" ")) break;
     out = k > 0 ? out + " " + p.split(/\s+/).slice(k).join(" ") : out + " " + p;
   }
   return collapseRepeats(out.replace(/\s+/g, " ").trim());
+}
+
+// Phones send each guess as the whole phrase so far. If so, the newest guess is the answer.
+export function latestGuess(list) {
+  const t = list.map(x => (x || "").trim()).filter(Boolean);
+  if (!t.length) return "";
+  if (t.length === 1) return collapseRepeats(t[0]);
+  const first = norm(t[0]).split(" ")[0];
+  const looksCumulative = t.slice(1).every(x => norm(x).split(" ")[0] === first);
+  return looksCumulative ? collapseRepeats(t[t.length - 1]) : mergeText(t, true);
 }
 
 // Safety net: remove a phrase repeated back-to-back ("I can I can create" -> "I can create").
@@ -127,7 +146,7 @@ export function listen({ lang = "en-IN", silenceMs = 2200, maxMs = 60000, noSpee
     let prior = "", sessionFinal = "", sessionInterim = "";
     let done = false, rec = null, restarts = 0, heard = false, silenceTimer = null;
     const started = Date.now();
-    const text = () => mergeText([prior, sessionFinal, sessionInterim]);
+    const text = () => mergeText([prior, sessionFinal, sessionInterim], isMobile);
     const finish = r => {
       if (done) return; done = true;
       clearTimeout(silenceTimer); clearTimeout(maxTimer); clearTimeout(noSpeechTimer);
@@ -147,8 +166,14 @@ export function listen({ lang = "en-IN", silenceMs = 2200, maxMs = 60000, noSpee
         // Rebuild this session's text from ALL results each time (works for both piecewise and cumulative results).
         const finals = [], interims = [];
         for (let i = 0; i < e.results.length; i++) (e.results[i].isFinal ? finals : interims).push(e.results[i][0].transcript);
-        sessionFinal = mergeText(finals);
-        sessionInterim = interims.length ? interims[interims.length - 1] : "";
+        if (isMobile) {
+          // Phones: every result is a fresh guess of the whole answer, so keep only the newest one.
+          sessionFinal = latestGuess([...finals, ...interims]);
+          sessionInterim = "";
+        } else {
+          sessionFinal = mergeText(finals);
+          sessionInterim = interims.length ? interims[interims.length - 1] : "";
+        }
         onInterim && onInterim(text());
         if (!isMobile) armSilence();
       };

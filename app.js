@@ -1,9 +1,10 @@
-import { FLOW, STAGES, SCRIPT } from "./questions.js";
-import * as N from "./nlp.js";
-import * as V from "./voice.js";
-import * as AI from "./ai.js";
-import { SHEET_URL } from "./config.js";
+import { FLOW, STAGES, SCRIPT } from "./questions.js?v=20261015-0938";
+import * as N from "./nlp.js?v=20261015-0938";
+import * as V from "./voice.js?v=20261015-0938";
+import * as AI from "./ai.js?v=20261015-0938";
+import { SHEET_URL } from "./config.js?v=20261015-0938";
 
+const VERSION = "20261015-0938";
 const $ = id => document.getElementById(id);
 const STORE = "youthvoice.v2.sessions";
 const STAGE_ORDER = ["about", "dream", "belief", "path", "support", "voice"];
@@ -530,6 +531,7 @@ function wire() {
   window.addEventListener("beforeunload", saveSession);
 }
 
+$("ver").textContent = VERSION;
 window.__yv = { state, FLOW }; // read-only hook for automated tests
 wire();
 initStart();
