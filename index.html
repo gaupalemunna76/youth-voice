@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Youth Voice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Sans+Devanagari:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f5f7fa; --panel:#fff; --ink:#14171c; --ink-2:#4b525d; --muted:#6f7783; --rule:#e2e5ea; --soft:#eef2f7;
+  --accent:#2a78d6; --accent-ink:#fff;
+  --dream:#2a78d6; --belief:#6250d6; --path:#1a9a6c; --support:#c77a00; --voice:#d1497a; --about:#6f7783;
+  --listen:#d1374a; --speak:#2a78d6; --ok:#1a9a6c; --warn-bg:#fdf1dc; --warn:#8a5300;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Noto Sans Devanagari","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#121417; --panel:#1a1d21; --ink:#eef0f3; --ink-2:#b7bdc6; --muted:#8c939e; --rule:#2c3138; --soft:#22262c;
+  --accent:#5b9cec; --accent-ink:#0d1117; --dream:#6aa8f0; --belief:#a59cf0; --path:#5cc99d; --support:#e6a643; --voice:#ec84aa; --about:#8c939e;
+  --listen:#f06b7b; --speak:#6aa8f0; --ok:#5cc99d; --warn-bg:#33281a; --warn:#f2c27a; color-scheme:dark }}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:17px/1.55 var(--body);min-height:100vh;
+  padding:env(safe-area-inset-top,0) max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0) max(16px,env(safe-area-inset-left,0px))}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15;text-wrap:balance}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.top{max-width:860px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1.2rem}
+.brand i{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--dream),var(--voice));display:inline-block}
+.top nav{display:flex;gap:8px}
+.ghost{background:transparent;border:1px solid var(--rule);border-radius:999px;padding:6px 14px;font-size:.9rem;color:var(--ink-2)}
+.ghost:hover{border-color:var(--accent);color:var(--ink)}
+main{max-width:860px;margin:0 auto;padding-bottom:48px}
+.screen{display:grid;gap:18px}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:18px 20px;min-width:0}
+.muted{color:var(--muted)} .small{font-size:.88rem;color:var(--ink-2)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+label.f{display:grid;gap:6px;font-size:.9rem;color:var(--ink-2)}
+select,input[type=range],input[type=number],textarea{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:9px 12px;width:100%}
+.big{background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;padding:14px 26px;font-weight:700;font-size:1.05rem}
+.big:disabled{opacity:.5;cursor:default}
+.btn{background:var(--soft);border:1px solid var(--rule);border-radius:10px;padding:9px 14px;font-weight:700;font-size:.92rem}
+.btn:hover{border-color:var(--accent)}
+.langs{display:flex;gap:10px;flex-wrap:wrap}
+.langs button{flex:1 1 160px;border:2px solid var(--rule);background:var(--panel);border-radius:12px;padding:14px;font-size:1.1rem;font-weight:700}
+.langs button[aria-pressed=true]{border-color:var(--accent);background:var(--soft)}
+.notice{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem}
+.ai{display:grid;gap:6px;font-size:.88rem}
+.ai div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--rule);padding-bottom:4px}
+.ai b{font-weight:700}
+/* question screen */
+.progress{display:grid;gap:8px}
+.stages{display:flex;gap:6px;flex-wrap:wrap}
+.stages span{font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--muted);border:1px solid transparent}
+.stages span.on{color:var(--c);border-color:var(--c)}
+.stages span.done{color:var(--ink-2)}
+.bar{height:6px;background:var(--soft);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.card{background:var(--panel);border:1px solid var(--rule);border-top:5px solid var(--c,var(--accent));border-radius:16px;padding:22px 22px 18px;display:grid;gap:16px}
+.qstage{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--c)}
+.qtext{font-family:var(--display);font-size:1.55rem;font-weight:700;line-height:1.25}
+.qtext[lang=hi]{font-family:"Noto Sans Devanagari",var(--body);font-weight:600}
+.fu{font-size:1.05rem;font-weight:700;color:var(--ink-2);border-left:3px solid var(--c);padding-left:10px}
+.status{display:flex;align-items:center;gap:12px;min-height:44px}
+.mic{width:56px;height:56px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--soft);color:var(--ink-2);flex:none;position:relative}
+.mic svg{width:26px;height:26px}
+.mic.listening{background:var(--listen);color:#fff}
+.mic.listening::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--listen);opacity:.5;animation:pulse 1.4s infinite}
+.mic.speaking{background:var(--speak);color:#fff}
+.mic.off{opacity:.45}
+@keyframes pulse{0%{transform:scale(.9);opacity:.6}100%{transform:scale(1.25);opacity:0}}
+@media (prefers-reduced-motion:reduce){.mic.listening::after{animation:none}}
+.stxt{font-size:.95rem;color:var(--ink-2)}
+.transcript{min-height:52px;background:var(--soft);border-radius:10px;padding:10px 14px;font-size:1.05rem;color:var(--ink)}
+.transcript.interim{color:var(--ink-2);font-style:italic}
+.transcript:empty::before{content:attr(data-ph);color:var(--muted);font-style:normal}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{border:2px solid var(--rule);background:var(--panel);border-radius:12px;padding:10px 16px;font-weight:700;font-size:1rem}
+.opt[aria-pressed=true]{border-color:var(--c,var(--accent));background:var(--soft)}
+.opts.nudge .opt{border-color:var(--c,var(--accent))}
+.type{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.type textarea{min-height:48px;resize:vertical}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;border-top:1px solid var(--rule);padding-top:12px}
+.controls .row{gap:6px}
+.hint{font-size:.9rem;color:var(--warn);min-height:1.2em}
+/* summary */
+.dims{display:grid;gap:10px}
+.dim{display:grid;grid-template-columns:150px minmax(0,1fr) 46px;gap:10px;align-items:center;font-size:.92rem}
+.dim .track{height:12px;background:var(--soft);border-radius:4px;overflow:hidden;display:flex;gap:2px}
+.dim .track i{flex:1;background:var(--rule)}
+.dim .track i.on{background:var(--c)}
+.dim b{text-align:right;font-variant-numeric:tabular-nums}
+.seg{display:inline-block;font-family:var(--display);font-size:1.3rem;font-weight:700;padding:6px 14px;border-radius:10px;background:var(--soft)}
+.flag{display:inline-block;margin-left:8px;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--warn-bg);color:var(--warn)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tbl{overflow-x:auto}
+.code{display:inline-block;font-size:.76rem;background:var(--soft);border-radius:6px;padding:1px 7px;margin:1px 3px 1px 0;color:var(--ink-2)}
+.q0{color:#c4483f} .q1{color:#c0652f} .q2{color:var(--muted)} .q3{color:var(--accent)} .q4{color:var(--ok)}
+[hidden]{display:none!important}
+@media (max-width:560px){ .qtext{font-size:1.3rem} .dim{grid-template-columns:110px minmax(0,1fr) 40px} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i aria-hidden="true"></i>Youth Voice</div>
+  <nav><button class="ghost" id="navSessions">Saved interviews</button></nav>
+</header>
+
+<main>
+  <!-- START -->
+  <section class="screen" id="sStart">
+    <div class="panel" style="display:grid;gap:10px">
+      <h1>How do you see your future?</h1>
+      <p class="small">A short voice conversation with 16 questions (about 6 minutes). The computer reads each question aloud and listens to the answer. You can also tap or type at any time.</p>
+      <div id="envNotice" class="notice" hidden></div>
+    </div>
+    <div class="panel" style="display:grid;gap:14px">
+      <h3>1. Choose a language</h3>
+      <div class="langs" role="group" aria-label="Language">
+        <button id="langEn" aria-pressed="true" data-lang="en">English</button>
+        <button id="langHi" aria-pressed="false" data-lang="hi" lang="hi">हिंदी</button>
+      </div>
+      <p class="small" id="hiNote" hidden>The Hindi wording is a draft. Have a Hindi speaker check it before using it in the field.</p>
+    </div>
+    <div class="panel" style="display:grid;gap:14px">
+      <h3>2. Check voice and microphone</h3>
+      <div class="grid2">
+        <label class="f">Voice (Microsoft Edge)<select id="voiceSel"></select></label>
+        <label class="f">Speaking speed <span id="rateVal" class="muted">1.0×</span><input type="range" id="rate" min="0.75" max="1.25" step="0.05" value="1"></label>
+      </div>
+      <div class="row">
+        <button class="btn" id="testVoice">Play a sample</button>
+        <button class="btn" id="testMic">Test microphone</button>
+        <span class="small" id="micResult" aria-live="polite"></span>
+      </div>
+    </div>
+    <div class="panel" style="display:grid;gap:10px">
+      <h3>Free AI helpers</h3>
+      <p class="small">These run in the browser at no cost. If one isn't available, the survey still works normally.</p>
+      <div class="ai" id="aiPanel" aria-live="polite"></div>
+    </div>
+    <div class="row"><button class="big" id="startBtn">Start interview</button><label class="small row" style="gap:6px"><input type="checkbox" id="typeOnly"> Type answers instead of speaking</label></div>
+  </section>
+
+  <!-- QUESTION -->
+  <section class="screen" id="sQ" hidden>
+    <div class="progress"><div class="stages" id="stages"></div><div class="bar"><i id="barFill"></i></div></div>
+    <article class="card" id="card">
+      <div class="qstage" id="qStage"></div>
+      <div class="qtext" id="qText" aria-live="polite"></div>
+      <div class="fu" id="qFollow" hidden aria-live="polite"></div>
+      <div class="status">
+        <button class="mic" id="micBtn" aria-label="Answer by voice" title="Answer by voice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg></button>
+        <div class="stxt" id="statusTxt" aria-live="polite"></div>
+      </div>
+      <div class="transcript" id="transcript" data-ph="Your answer will appear here"></div>
+      <div class="opts" id="opts"></div>
+      <div class="type" id="typeRow">
+        <textarea id="typeBox" rows="1" placeholder="Or type your answer…"></textarea>
+        <button class="btn" id="sendBtn">Send</button>
+      </div>
+      <div class="hint" id="hint" aria-live="polite"></div>
+      <div class="controls">
+        <div class="row"><button class="btn" id="backBtn">Back</button><button class="btn" id="repeatBtn">Repeat</button><button class="btn" id="skipBtn">Skip</button></div>
+        <div class="row"><button class="btn" id="muteBtn" aria-pressed="false">Voice on</button><button class="btn" id="pauseBtn">Pause</button></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- END -->
+  <section class="screen" id="sEnd" hidden>
+    <div class="panel" style="display:grid;gap:8px">
+      <h1 id="endTitle">Thank you!</h1>
+      <p class="small" id="endText"></p>
+    </div>
+    <div class="panel" id="profilePanel" style="display:grid;gap:14px">
+      <h2>Future Vision Profile</h2>
+      <div><span class="seg" id="segment"></span><span class="flag" id="blocked" hidden>Blocked</span></div>
+      <p class="small" id="segNote"></p>
+      <div class="dims" id="dims"></div>
+      <div style="display:grid;gap:6px"><h3>Summary</h3><p id="summary"></p><p class="small muted" id="summarySrc"></p></div>
+    </div>
+    <div class="panel" style="display:grid;gap:10px">
+      <h2>Answers</h2>
+      <div class="tbl"><table><thead><tr><th>Q</th><th>Answer</th><th>Quality</th><th>AI themes</th></tr></thead><tbody id="ansBody"></tbody></table></div>
+      <p class="small">Quality: 0 off-target · 1 non-answer · 2 thin · 3 clear · 4 rich. AI themes appear as the model finishes, usually within a few seconds.</p>
+    </div>
+    <div class="row"><button class="big" id="newBtn">Start a new interview</button><button class="btn" id="dlOne">Download this interview (JSON)</button></div>
+  </section>
+
+  <!-- SESSIONS -->
+  <section class="screen" id="sSessions" hidden>
+    <div class="panel" style="display:grid;gap:12px">
+      <div class="row" style="justify-content:space-between"><h2>Saved interviews</h2><button class="ghost" id="backHome">Back</button></div>
+      <p class="small">Interviews are saved in this browser on this computer only. Download them regularly.</p>
+      <div class="row"><button class="btn" id="dlCsv">Download all (CSV)</button><button class="btn" id="dlJson">Download all (JSON)</button><button class="btn" id="syncNow">Send to Google Sheet now</button><button class="btn" id="clearAll">Delete all…</button><span id="clearConfirm" hidden class="row"><span class="small">Delete every saved interview?</span><button class="btn" id="clearYes">Yes, delete</button><button class="btn" id="clearNo">Cancel</button></span></div>
+      <div class="tbl"><table><thead><tr><th>Started</th><th>Language</th><th>Status</th><th>Segment</th><th>Goal</th><th>Sheet</th></tr></thead><tbody id="sessBody"></tbody></table></div>
+    </div>
+  </section>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
