@@ -40,18 +40,19 @@ async function initStart() {
   const notes = [];
   if (!V.canListen) notes.push("Speech recognition isn't available in this browser. Open this page in Microsoft Edge to answer by voice. Typing still works.");
   if (location.protocol === "file:") notes.push("For microphone access, open the tool with start.bat (it runs at http://localhost:8765) instead of opening the file directly.");
-  if (V.canListen) notes.push("Edge sends speech to Microsoft's online service to turn it into text, so voice answers need an internet connection.");
+  if (V.canListen) notes.push("Speech is turned into text by an online service, so voice answers need an internet connection.");
+  if (V.isMobile) notes.push("On phones: keep the media volume up so you can hear the questions. The phone beeps when the microphone starts and stops; that is normal. Speak after the beep and pause when you finish.");
   $("envNotice").hidden = !notes.length; $("envNotice").innerHTML = notes.map(n => `<div>${n}</div>`).join("");
   await V.loadVoices();
   fillVoices();
   AI.onAIState(renderAI);
-  AI.startCoding(); AI.initTranslator(); AI.initPrompt();
+  AI.startCoding(V.isMobile); AI.initTranslator(); AI.initPrompt();
 }
 function fillVoices() {
   const sel = $("voiceSel"); sel.innerHTML = "";
   const list = V.voicesFor(recLang());
   const best = V.pickVoice(recLang());
-  if (!list.length) { sel.innerHTML = `<option>No ${state.lang === "hi" ? "Hindi" : "English"} voice found: questions will show on screen</option>`; state.voice = null; return; }
+  if (!list.length) { sel.innerHTML = `<option>Device default ${state.lang === "hi" ? "Hindi" : "English"} voice</option>`; state.voice = null; return; }
   const local = v => v.lang.replace("_", "-").toLowerCase() === recLang().toLowerCase();
   list.sort((a, b) => (local(b) - local(a)) || (/natural/i.test(b.name) - /natural/i.test(a.name)));
   for (const v of list) {
@@ -141,8 +142,16 @@ async function say(text, my) {
   if (my !== state.run) return;
   if (!state.speakOn || !V.canSpeak) { await sleep(Math.min(2500, 400 + text.length * 25)); return; }
   setMic("speaking");
-  await V.speak(text, { voice: state.voice, rate: state.rate, lang: recLang() });
-  if (my === state.run) setMic("idle");
+  const r = await V.speak(text, { voice: state.voice, rate: state.rate, lang: recLang() });
+  if (my !== state.run) return;
+  setMic("idle");
+  if (r.ok) { state.ttsFails = 0; return; }
+  // The device didn't read it aloud: keep going (the question is on screen) and tell the person why.
+  state.ttsFails = (state.ttsFails || 0) + 1;
+  hint(state.lang === "hi"
+    ? "फ़ोन सवाल पढ़कर नहीं सुना पाया। सवाल ऊपर लिखा है। आवाज़ (मीडिया वॉल्यूम) बढ़ाकर 'Repeat' दबाएँ।"
+    : "The device couldn't read this aloud. The question is shown above. Turn up the media volume and tap Repeat to hear it.");
+  await sleep(Math.min(2500, 400 + text.length * 20));
 }
 
 // ---------------- capturing one answer (voice, typing or tapping — whichever comes first) ----------------
@@ -165,6 +174,7 @@ function capture(q, my) {
       if (looping || !voiceUsable()) { if (!voiceUsable() && my === state.run) setMic(state.voiceOn ? "idle" : "off"); return; }
       looping = true;
       let silent = 0;
+      await sleep(350);
       while (voiceUsable()) {
         setMic("listening");
         const open = q.type === "open" && !q.plain;
@@ -202,13 +212,18 @@ function capture(q, my) {
 // ---------------- AI coding in the background ----------------
 function codeInBackground(q, rec) {
   if (!q.codes || rec.plain) return;
-  const text = [rec.text, rec.followup].filter(Boolean).join(". ");
+  const isHindi = t => /[ऀ-ॿ]/.test(t || "");
   const job = (async () => {
-    let en = text;
-    if (/[ऀ-ॿ]/.test(text)) { en = await AI.toEnglish(text); rec.en = en || null; }
+    // Translate the answer and the follow-up separately so each English version matches its own text.
+    let mainEn = rec.text, fuEn = rec.followup || "";
+    if (isHindi(rec.text)) { mainEn = await AI.toEnglish(rec.text); rec.en = mainEn || null; }
+    if (rec.followup && isHindi(rec.followup)) { fuEn = await AI.toEnglish(rec.followup); rec.followupEn = fuEn || null; }
+    // If the first answer was vague and the follow-up carries the content, code the follow-up on its own.
+    const useFollowOnly = fuEn && N.quality(rec.text) <= 2 && !(q.nowhereFollow && N.isNowhere(rec.text));
+    const en = useFollowOnly ? fuEn : [mainEn, fuEn].filter(Boolean).join(". ");
     if (!en) { rec.codes = []; rec.codeNote = "needs translation"; return; }
-    const codes = await AI.classify(en, q.codes);
-    rec.codes = codes;
+    const qEn = (typeof q.text === "function" ? q.text(state.session.answers) : q.text).en;
+    rec.codes = await AI.classify(en, q.codes, qEn);
     saveSession();
     if (!$("sEnd").hidden) renderAnswers();
   })();
@@ -363,7 +378,7 @@ function answerText(a) {
   if (a.kind === "number") return esc(a.value);
   let h = esc(a.text);
   if (a.followup) h += `<br><span class="small">↳ ${esc(a.followupQ)} <b>${esc(a.followup)}</b></span>`;
-  if (a.en && a.en !== a.text) h += `<br><span class="small muted">EN: ${esc(a.en)}</span>`;
+  if (a.en && a.en !== a.text) h += `<br><span class="small muted">EN (machine translation): ${esc(a.en)}${a.followupEn ? " — " + esc(a.followupEn) : ""}</span>`;
   return h;
 }
 function renderAnswers() {
@@ -377,7 +392,7 @@ function renderAnswers() {
 }
 async function makeSummary() {
   const A = state.session.answers;
-  const g = id => A[id] && !A[id].skipped ? (A[id].en || [A[id].text, A[id].followup].filter(Boolean).join(" — ")) : "";
+  const g = id => A[id] && !A[id].skipped ? [A[id].en || A[id].text, A[id].followupEn || A[id].followup].filter(Boolean).join(" — ") : "";
   $("summary").textContent = "Writing summary…";
   await Promise.race([Promise.allSettled(state.aiJobs), sleep(8000)]);
   const facts = `Future work: ${g("F1")}\nWhy: ${g("F2")}\nGood life: ${g("F3")}\nConfidence: ${A.F4?.label || ""}\nBiggest barrier: ${g("F5")}\nNext step: ${g("F6")}\nLearning now from: ${g("F7")}\nAdvice from: ${(A.F8?.labels || []).join(", ")}\nHelp wanted: ${g("F9")}\nOne change: ${g("F10")}`;
@@ -416,7 +431,7 @@ function rowOf(s) {
   for (const q of ASKED) {
     const a = s.answers[q.id];
     const val = !a ? "" : a.skipped ? "(skipped)" : a.kind === "choice" ? a.value : a.kind === "multi" ? (a.values.join("|") || "other:" + (a.other || "")) : a.kind === "number" ? a.value : a.text;
-    r.push(val, a?.followup || "", a?.quality ?? "", a?.en && a.en !== a.text ? a.en : "", (a?.codes || []).map(c => c.label).join("|"), a?.via || "");
+    r.push(val, a?.followup || "", a?.quality ?? "", [a?.en && a.en !== a.text ? a.en : "", a?.followupEn || ""].filter(Boolean).join(" — "), (a?.codes || []).map(c => c.label).join("|"), a?.via || "");
   }
   const p = s.profile || {};
   r.push(p.vision, p.purpose, p.agency, p.pathway, p.access, p.support, p.segment, p.blocked, p.vqi, s.summary || "");
@@ -468,7 +483,7 @@ function wire() {
   $("langHi").onclick = () => setLang("hi");
   $("voiceSel").onchange = e => { state.voice = V.voicesFor(recLang()).find(v => v.name === e.target.value) || null; renderAI(AI.aiState); };
   $("rate").oninput = e => { state.rate = +e.target.value; $("rateVal").textContent = state.rate.toFixed(2) + "×"; };
-  $("testVoice").onclick = () => V.speak(state.lang === "hi" ? "नमस्ते! मैं आपसे आपके भविष्य के बारे में कुछ सवाल पूछूँगी।" : "Hello! I'll ask you a few questions about your future.", { voice: state.voice, rate: state.rate, lang: recLang() });
+  $("testVoice").onclick = () => { V.unlockSpeech(); V.speak(state.lang === "hi" ? "नमस्ते! मैं आपसे आपके भविष्य के बारे में कुछ सवाल पूछूँगी।" : "Hello! I'll ask you a few questions about your future.", { voice: state.voice, rate: state.rate, lang: recLang() }).then(r => { if (!r.ok) $("micResult").textContent = "This device didn't play the voice. Check the media volume, or try Microsoft Edge."; }); };
   $("testMic").onclick = async () => {
     if (!V.canListen) { $("micResult").textContent = "Speech recognition isn't available here. Use Microsoft Edge."; return; }
     $("micResult").textContent = "Say something…";
@@ -476,6 +491,7 @@ function wire() {
     $("micResult").textContent = r.error ? (r.error === "not-allowed" ? "Microphone blocked: allow it from the lock icon in the address bar." : "Problem: " + r.error) : r.text ? "Heard: “" + r.text + "” ✓" : "Didn't hear anything. Check the microphone.";
   };
   $("startBtn").onclick = () => {
+    V.unlockSpeech();
     state.voiceOn = !$("typeOnly").checked; state.speakOn = true;
     $("muteBtn").textContent = state.lang === "hi" ? "आवाज़ चालू" : "Voice on";
     newSession(); saveSession(); show("sQ"); play(0);
@@ -485,6 +501,7 @@ function wire() {
   // Clicking into the box means the person wants to type: stop listening so speech can't overwrite it.
   $("typeBox").addEventListener("focus", () => state.pending?.stopListen());
   $("micBtn").onclick = () => { if (!V.canListen) return hint("Voice input needs Microsoft Edge."); state.voiceOn = true; if (state.pending) { V.stopSpeaking(); state.pending.relisten(); } };
+  ["repeatBtn", "backBtn", "pauseBtn", "skipBtn", "sendBtn"].forEach(id => $(id).addEventListener("click", () => V.unlockSpeech(), true));
   $("skipBtn").onclick = () => state.pending?.resolve({ skipped: true });
   $("repeatBtn").onclick = () => { stopAll(); play(state.idx); };
   $("backBtn").onclick = () => { const p = prevIndex(state.idx); stopAll(); play(p); };

@@ -91,7 +91,7 @@ export const FLOW = [
   { id: "F5", type: "open", stage: "belief",
     text: { en: "What is the biggest thing that could stop you from getting there?", hi: "वहाँ तक पहुँचने में आपकी सबसे बड़ी रुकावट क्या हो सकती है?" },
     followNon: { en: "And if something did get in the way, what might it be?", hi: "और अगर कोई चीज़ रास्ते में आए, तो वह क्या हो सकती है?" },
-    codes: ["money or fees", "exam competition or few jobs", "lack of guidance or information", "family expectations or marriage", "gender or safety", "no opportunities nearby", "corruption or unfair system", "health or disability", "self-doubt or fear", "nothing"] },
+    codes: ["money or fees", "too much competition for jobs or exams", "lack of guidance or information", "family expectations or marriage", "gender or safety", "no opportunities nearby", "corruption or unfair system", "health or disability", "self-doubt or fear", "nothing"] },
 
   { id: "F6", type: "open", stage: "path",
     text: a => {
