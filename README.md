@@ -44,3 +44,9 @@ The web-app URL accepts only rows in the tool's exact format, and answers are st
 `index.html` (screens) · `app.js` (conversation flow) · `questions.js` (questionnaire text, options and follow-ups; edit the wording here) · `voice.js` (Edge voice and microphone) · `nlp.js` (number and option matching, quality, profile) · `ai.js` and `ai-worker.js` (AI) · `serve.py` and `start.bat` (local server).
 
 The Hindi wording is a draft: have a native speaker review `questions.js` before field use.
+
+## Updating the live version
+1. Edit the files (question wording is in `questions.js`).
+2. Run the tests: `node tests/nlp.test.mjs`, `node tests/transcript.test.mjs`, `node tests/phone_speech.test.mjs`. For a full scripted interview in Edge, start `serve.py`, then run `node tests/run_flow_in_edge.mjs "http://localhost:8765/tests/flowtest.html?lang=en" <empty-profile-folder>`.
+3. Run `python set_version.py` so phones load the new code, not a cached copy.
+4. Commit and push. GitHub Pages updates in about a minute; the footer shows the version.

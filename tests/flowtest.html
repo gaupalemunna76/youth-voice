@@ -1,0 +1,51 @@
+<!doctype html><meta charset="utf-8"><title>flow test</title>
+<pre id="out">start</pre>
+<iframe id="f" src="../index.html" style="width:900px;height:900px"></iframe>
+<script>
+const out = document.getElementById("out"), log = s => (out.textContent += "\n" + s);
+const LANG = new URLSearchParams(location.search).get("lang") || "en";
+const ANS = {
+  en: { A1: "I am twenty two", A3: "Bihar, Siwan", A5: "BA second year", F1: "teacher", F1f: "Teaching children in a government school and helping them learn English",
+        F2: "because I want to help the girls in my village continue school", F3: "Living near my parents with a stable income", F5: "money for coaching fees",
+        F6: "hard work", F6f: "clear the TET exam after B.Ed", F7: "nowhere yet", F7f: "coaching is too expensive and the centre is far from my village",
+        F8: "my mother and my teacher and youtube", F9: "A career counsellor in college who tells me which exam to take", F10: "More practical learning and less rote exams", C2: "around 20 thousand" },
+  hi: { A1: "मेरी उम्र बाईस साल है", A3: "बिहार, सिवान", A5: "बी ए दूसरा साल", F1: "शिक्षक", F1f: "सरकारी स्कूल में बच्चों को पढ़ाना", F2: "क्योंकि मैं अपने गाँव की लड़कियों की मदद करना चाहती हूँ",
+        F3: "अपने परिवार के साथ रहना", F5: "पैसे की कमी", F6: "मेहनत", F6f: "बी एड के बाद टीईटी परीक्षा", F7: "कहीं नहीं", F7f: "कोचिंग बहुत महंगी है", F8: "मम्मी और टीचर", F9: "कॉलेज में करियर सलाहकार", F10: "पढ़ाई ज़्यादा व्यावहारिक हो", C2: "पता नहीं" },
+}[LANG];
+const TAP = { A2: "female", A4: "studying", A6: "government", F4: "somewhat", C1: "no" };
+const wait = ms => new Promise(r => setTimeout(r, ms));
+document.getElementById("f").onload = async () => {
+  const w = document.getElementById("f").contentWindow, d = w.document, $ = id => d.getElementById(id);
+  await wait(500);
+  if (LANG === "hi") $("langHi").click();
+  $("typeOnly").checked = true; $("startBtn").click();
+  const seen = {};
+  for (let step = 0; step < 1500; step++) {
+    await wait(300);
+    if (!$("sEnd").hidden) break;
+    const st = w.__yv.state; if (!st.pending) continue;
+    const q = w.__yv.FLOW[st.idx]; const id = q.id;
+    const followVisible = !$("qFollow").hidden;
+    const key = followVisible ? id + "f" : id;
+    if (seen[key]) continue; seen[key] = 1;
+    log(`${key}: ${followVisible ? $("qFollow").textContent : $("qText").textContent}`.slice(0, 120));
+    if (!followVisible && TAP[id]) { [...d.querySelectorAll(".opt")].find(b => b.dataset.v === TAP[id]).click(); continue; }
+    const a = ANS[key] ?? (followVisible ? "skip" : null);
+    if (a == null) { log("  (no scripted answer, skipping)"); $("skipBtn").click(); continue; }
+    $("typeBox").value = a; $("sendBtn").click();
+  }
+  for (let i = 0; i < 150; i++) { // wait up to ~150 s for the AI model to download and code the answers
+    const A = w.__yv.state.session.answers;
+    if (["F1", "F2", "F5", "F9"].every(k => A[k]?.codes)) break;
+    await wait(1000);
+  }
+  await wait(1500);
+  log("AI state " + JSON.stringify((await import("http://localhost:8765/ai.js")).aiState));
+  const s = w.__yv.state.session;
+  log("STATUS " + s.status + " | segment " + s.profile?.segment + " | blocked " + s.profile?.blocked + " | vqi " + s.profile?.vqi);
+  log("PROFILE " + JSON.stringify(s.profile));
+  for (const [k, v] of Object.entries(s.answers)) log(`${k} q=${v.quality ?? "-"} val=${v.value ?? v.values ?? v.text ?? ""} fu=${v.followup || ""} goal=${v.goal || ""} en=${v.en || ""} codes=${(v.codes || []).map(c => c.label).join("|")}`);
+  log("SUMMARY " + $("summary").textContent);
+  document.title = "done";
+};
+</script>
