@@ -24,8 +24,8 @@ export const FLOW = [
     reprompt: { en: "Please tell me your age as a number, for example nineteen.", hi: "कृपया अपनी उम्र अंकों में बताइए, जैसे उन्नीस।" } },
 
   { id: "A2", type: "choice", stage: "about",
-    text: { en: "Are you a girl or woman, a boy or man, or would you describe yourself another way?",
-            hi: "आप लड़की या महिला हैं, लड़का या पुरुष हैं, या खुद को किसी और तरह से बताना चाहेंगे?" },
+    text: { en: "What is your gender: female, male, other, or would you prefer not to say?",
+            hi: "आपका लिंग क्या है: महिला, पुरुष, अन्य, या आप नहीं बताना चाहेंगे?" },
     options: [
       { v: "female", en: "Female", hi: "महिला", syn: ["female", "girl", "woman", "lady", "लड़की", "महिला", "औरत", "स्त्री", "फीमेल"] },
       { v: "male", en: "Male", hi: "पुरुष", syn: ["male", "boy", "man", "लड़का", "पुरुष", "आदमी", "मेल"] },

@@ -1,10 +1,10 @@
-import { FLOW, STAGES, SCRIPT } from "./questions.js?v=20261015-0938";
-import * as N from "./nlp.js?v=20261015-0938";
-import * as V from "./voice.js?v=20261015-0938";
-import * as AI from "./ai.js?v=20261015-0938";
-import { SHEET_URL } from "./config.js?v=20261015-0938";
+import { FLOW, STAGES, SCRIPT } from "./questions.js?v=20261015-1227";
+import * as N from "./nlp.js?v=20261015-1227";
+import * as V from "./voice.js?v=20261015-1227";
+import * as AI from "./ai.js?v=20261015-1227";
+import { SHEET_URL } from "./config.js?v=20261015-1227";
 
-const VERSION = "20261015-0938";
+const VERSION = "20261015-1227";
 const $ = id => document.getElementById(id);
 const STORE = "youthvoice.v2.sessions";
 const STAGE_ORDER = ["about", "dream", "belief", "path", "support", "voice"];
